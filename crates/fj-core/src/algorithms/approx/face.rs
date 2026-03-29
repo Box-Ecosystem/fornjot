@@ -7,7 +7,7 @@ use std::{collections::BTreeSet, ops::Deref};
 use crate::{
     approx::Tolerance,
     geometry::Geometry,
-    storage::Handle,
+    storage:: Handle,
     topology::{Face, Handedness, ObjectSet},
     validation::ValidationConfig,
 };
@@ -34,7 +34,9 @@ impl Approx for &ObjectSet<Face> {
             .map(|face| approx_face(face.clone(), tolerance, cache, geometry))
             .collect();
 
-        let min_distance = ValidationConfig::default().distinct_min_distance;
+        let config = ValidationConfig::default();
+        let min_distance = config.distinct_min_distance;
+        let identical_max_distance = config.identical_max_distance;
         let mut all_points: BTreeSet<ApproxPoint<2>> = BTreeSet::new();
 
         // Run some validation code on the approximation.
@@ -45,8 +47,7 @@ impl Approx for &ObjectSet<Face> {
                 for b in &all_points {
                     let distance = (b.global_form - a.global_form).magnitude();
 
-                    if b.global_form != a.global_form && distance < min_distance
-                    {
+                    if distance > identical_max_distance && distance < min_distance {
                         panic!(
                             "Invalid approximation: \
                             Distinct points are too close \
